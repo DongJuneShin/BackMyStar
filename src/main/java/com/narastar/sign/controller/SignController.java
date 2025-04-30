@@ -13,16 +13,67 @@ import java.util.Map;
 @RequestMapping("/sign")
 public class SignController {
 
-    @PostMapping("/certifiNumber")
+    /***
+     * 회원가입 인증번호 생성
+     * @param paramMap
+     * @return
+     */
+    @PostMapping("/selectCertifiNumber")
     public ResponseEntity<Map<String,Object>> requestCertification(@RequestBody Map<String,Object> paramMap) {
         System.err.println("paramMap : "+paramMap);
-        String telecom = (String) paramMap.get("telecom");
-        String phoneNumber = (String) paramMap.get("phoneNumber");
-        System.err.println("telecom : "+telecom);
-        System.err.println("phoneNumber : "+phoneNumber);
         Map<String, Object> resultMap = new HashMap<>();
         resultMap.put("successAt", "200");
-        // 인증 요청 처리 로직
+        return ResponseEntity.ok(resultMap);
+    }
+
+    /***
+     * 인증번호 검증
+     * @param paramMap
+     * @return
+     */
+    @PostMapping("/certifiNumber")
+    public ResponseEntity<Map<String,Object>> certifiNumber(@RequestBody Map<String,Object> paramMap) {
+        System.err.println("인증번호 맵 : "+paramMap);
+        String certifiNumber = paramMap.get("certifiNumber").toString();
+
+        Map<String, Object> resultMap = new HashMap<>();
+
+        if(certifiNumber.equals("123456")){
+            resultMap.put("successAt", "200");      //성공
+        }else{
+            resultMap.put("successAt", "100");      //실패
+        }
+
+        return ResponseEntity.ok(resultMap);
+    }
+
+    /***
+     * 닉네임 중복검사
+     * @param paramMap
+     * @return
+     */
+    @PostMapping("/dupleNickName")
+    public ResponseEntity<Map<String,Object>> dupleNickName(@RequestBody Map<String,Object> paramMap) {
+        String nickName = paramMap.get("nickname").toString();
+        Map<String, Object> resultMap = new HashMap<>();
+
+        if(nickName.equals("나둥이")){
+            resultMap.put("successAt", "100");
+        }else{
+            resultMap.put("successAt", "200");
+        }
+        return ResponseEntity.ok(resultMap);
+    }
+
+    /***
+     * 회원가입
+     * @param paramMap
+     * @return
+     */
+    @PostMapping("/signUp")
+    public ResponseEntity<Map<String,Object>> signUp(@RequestBody Map<String,Object> paramMap) {
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("successAt", "200");
         return ResponseEntity.ok(resultMap);
     }
 }
