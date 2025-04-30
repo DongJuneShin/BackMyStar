@@ -76,4 +76,12 @@ public class SignController {
         resultMap.put("successAt", "200");
         return ResponseEntity.ok(resultMap);
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<Map<String,Object>> login(@RequestBody Map<String,Object> paramMap) {
+        System.err.println("로그인 아이디 : "+paramMap);
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("successAt", "200");
+        return ResponseEntity.ok(resultMap);
+    }
 }
