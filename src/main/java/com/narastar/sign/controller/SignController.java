@@ -1,5 +1,7 @@
 package com.narastar.sign.controller;
 
+import com.narastar.sign.service.SignService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,8 +12,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/sign")
 public class SignController {
+
+    private final SignService signService;
 
     /***
      * 회원가입 인증번호 생성
@@ -81,6 +86,7 @@ public class SignController {
     public ResponseEntity<Map<String,Object>> login(@RequestBody Map<String,Object> paramMap) {
         System.err.println("로그인 아이디 : "+paramMap);
         Map<String, Object> resultMap = new HashMap<>();
+        int result = signService.selectLogin(paramMap);
         resultMap.put("successAt", "200");
         return ResponseEntity.ok(resultMap);
     }

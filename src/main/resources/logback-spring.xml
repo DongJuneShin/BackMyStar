@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+    <!-- 프로젝트 패키지 -->
+    <logger name="com.narastar" level="DEBUG"/>
+    <!-- MyBatis 로그 -->
+    <logger name="org.mybatis" level="DEBUG"/>
+    <logger name="org.apache.ibatis" level="DEBUG"/>
+</configuration>
