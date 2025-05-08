@@ -1,8 +1,11 @@
 package com.narastar.sign.controller;
 
+import com.narastar.config.JwtUtil;
 import com.narastar.sign.service.SignService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,7 +19,10 @@ import java.util.Map;
 @RequestMapping("/sign")
 public class SignController {
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     private final SignService signService;
+    private final JwtUtil jwtUtil;
 
     /***
      * 회원가입 인증번호 생성
@@ -84,10 +90,24 @@ public class SignController {
 
     @PostMapping("/login")
     public ResponseEntity<Map<String,Object>> login(@RequestBody Map<String,Object> paramMap) {
-        System.err.println("로그인 아이디 : "+paramMap);
         Map<String, Object> resultMap = new HashMap<>();
+
+        String password = paramMap.get("loginPw").toString();
+        String encodedPassword = passwordEncoder.encode(password);
+
+        paramMap.put("loginPw", encodedPassword);
         int result = signService.selectLogin(paramMap);
-        resultMap.put("successAt", "200");
+
+        if(result > 0){
+            String phoneNumber = paramMap.get("phoneInput").toString();
+            String token = jwtUtil.generateToken(phoneNumber);
+
+            resultMap.put("successAt", "200");
+            resultMap.put("token", token);
+        }else{
+            resultMap.put("successAt", "100");
+            resultMap.put("message", "아이디 또는 비밀번호를 확인 해주시기 바랍니다.");
+        }
         return ResponseEntity.ok(resultMap);
     }
 }
