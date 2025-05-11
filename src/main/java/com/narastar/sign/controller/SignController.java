@@ -2,6 +2,10 @@ package com.narastar.sign.controller;
 
 import com.narastar.config.JwtUtil;
 import com.narastar.sign.service.SignService;
+import com.narastar.sign.vo.AuthCodesVO;
+import com.narastar.sign.vo.Members;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -11,8 +15,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,9 +38,42 @@ public class SignController {
      */
     @PostMapping("/selectCertifiNumber")
     public ResponseEntity<Map<String,Object>> requestCertification(@RequestBody Map<String,Object> paramMap) {
-        System.err.println("paramMap : "+paramMap);
         Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("successAt", "200");
+
+        try{
+            AuthCodesVO authCodesVo = signService.selectCertification(paramMap);
+
+            Random random = new Random();
+            String code = (100000 + random.nextInt(900000))+"";  // 100000 ~ 999999 범위
+
+            paramMap.put("code", code);
+
+            //인증번호 인증시간 유효할 경우
+            if(authCodesVo != null){
+                DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                LocalDateTime createAt = LocalDateTime.parse(authCodesVo.getCreateAt(), dateTimeFormatter);
+                LocalDateTime expiresAt = LocalDateTime.parse(authCodesVo.getExpiresAt(), dateTimeFormatter);
+
+                LocalDateTime now = LocalDateTime.now();
+
+                if(!now.isBefore(createAt) && !now.isAfter(expiresAt)){
+                    paramMap.put("codesId", authCodesVo.getCodesId());
+                    signService.updateCertifiDate(paramMap);
+                }else{
+                    signService.requestCertification(paramMap);
+                }
+
+            }else{
+                signService.requestCertification(paramMap);
+            }
+
+            resultMap.put("successAt", "200");
+        }catch(RuntimeException e){
+            resultMap.put("successAt", "100");
+            resultMap.put("message", "인증번호 발송 중 에러가 발생하였습니다.\n관리자에게 문의 바랍니다.");
+        }
+
         return ResponseEntity.ok(resultMap);
     }
 
@@ -44,15 +84,37 @@ public class SignController {
      */
     @PostMapping("/certifiNumber")
     public ResponseEntity<Map<String,Object>> certifiNumber(@RequestBody Map<String,Object> paramMap) {
-        System.err.println("인증번호 맵 : "+paramMap);
-        String certifiNumber = paramMap.get("certifiNumber").toString();
-
         Map<String, Object> resultMap = new HashMap<>();
 
-        if(certifiNumber.equals("123456")){
-            resultMap.put("successAt", "200");      //성공
-        }else{
-            resultMap.put("successAt", "100");      //실패
+        try{
+            AuthCodesVO authCodesVo = signService.selectCertification(paramMap);
+
+            if(authCodesVo != null){
+                DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                LocalDateTime createAt = LocalDateTime.parse(authCodesVo.getCreateAt(), dateTimeFormatter);
+                LocalDateTime expiresAt = LocalDateTime.parse(authCodesVo.getExpiresAt(), dateTimeFormatter);
+
+                LocalDateTime now = LocalDateTime.now();
+
+                if(!now.isBefore(createAt) && !now.isAfter(expiresAt)){
+                    if(authCodesVo.getCode().equals(paramMap.get("certifiNumber"))){
+                        paramMap.put("codesId", authCodesVo.getCodesId());
+                        signService.updateCertifiVerified(paramMap);
+                        resultMap.put("successAt", "200");
+                    }else{
+                        resultMap.put("successAt", "150");
+                        resultMap.put("message", "인증번호가 존재하지 않습니다.");
+                    }
+                }else{
+                    resultMap.put("successAt", "150");
+                    resultMap.put("message", "인증번호가 존재하지 않습니다.");
+                }
+            }
+
+        }catch(RuntimeException e){
+            resultMap.put("successAt", "100");
+            resultMap.put("message", "인증번호 발송 중 에러가 발생하였습니다.\n관리자에게 문의 바랍니다.");
         }
 
         return ResponseEntity.ok(resultMap);
@@ -65,14 +127,16 @@ public class SignController {
      */
     @PostMapping("/dupleNickName")
     public ResponseEntity<Map<String,Object>> dupleNickName(@RequestBody Map<String,Object> paramMap) {
-        String nickName = paramMap.get("nickname").toString();
         Map<String, Object> resultMap = new HashMap<>();
 
-        if(nickName.equals("나둥이")){
+        int count = signService.dupleNickName(paramMap);
+
+        if(count > 0){
             resultMap.put("successAt", "100");
         }else{
             resultMap.put("successAt", "200");
         }
+
         return ResponseEntity.ok(resultMap);
     }
 
@@ -84,30 +148,39 @@ public class SignController {
     @PostMapping("/signUp")
     public ResponseEntity<Map<String,Object>> signUp(@RequestBody Map<String,Object> paramMap) {
         Map<String, Object> resultMap = new HashMap<>();
+
+        String rawPassword = paramMap.get("password").toString();
+        String encodedPassword = passwordEncoder.encode(rawPassword);
+        paramMap.put("encodedPassword", encodedPassword);
+
+        signService.insertMembers(paramMap);
+
         resultMap.put("successAt", "200");
         return ResponseEntity.ok(resultMap);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String,Object>> login(@RequestBody Map<String,Object> paramMap) {
+    public ResponseEntity<?> login(@RequestBody Map<String,Object> paramMap, HttpServletResponse response) {
         Map<String, Object> resultMap = new HashMap<>();
 
-        String password = paramMap.get("loginPw").toString();
-        String encodedPassword = passwordEncoder.encode(password);
+        Members members = signService.selectLogin(paramMap);
 
-        paramMap.put("loginPw", encodedPassword);
-        int result = signService.selectLogin(paramMap);
-
-        if(result > 0){
-            String phoneNumber = paramMap.get("phoneInput").toString();
-            String token = jwtUtil.generateToken(phoneNumber);
-
-            resultMap.put("successAt", "200");
-            resultMap.put("token", token);
-        }else{
+        if(members == null){
             resultMap.put("successAt", "100");
-            resultMap.put("message", "아이디 또는 비밀번호를 확인 해주시기 바랍니다.");
+            resultMap.put("message", "존재하지 않는 회원입니다.");
+        }else{
+            if (!passwordEncoder.matches(paramMap.get("loginPw").toString(), members.getPassword())) {
+                resultMap.put("successAt", "100");
+                resultMap.put("message", "존재하지 않는 회원입니다.");
+            }else{
+                String token = jwtUtil.generateToken(paramMap.get("phoneInput").toString());
+
+                jwtUtil.sendTokenInCookie(token, response);
+
+                resultMap.put("successAt", "200");
+            }
         }
+
         return ResponseEntity.ok(resultMap);
     }
 }

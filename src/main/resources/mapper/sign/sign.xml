@@ -4,12 +4,67 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.narastar.sign.mapper.SignMapper">
-    <select id="selectLogin" parameterType="java.util.Map" resultType="Integer" >
-        SELECT COUNT(*)
+    <select id="selectLogin" parameterType="java.util.Map" resultType="members" >
+        /* sign.selectLogin */
+        SELECT PHONE_NUMBER,
+               NICKNAME,
+               PASSWORD,
+               CREATE_AT,
+               MEMBER_GRADE
         FROM MEMBERS
-        WHERE
-            PHONE_NUMBER = #{phoneInput}
-          AND PASSWORD = #{loginPw}
+        WHERE PHONE_NUMBER = #{phoneInput}
     </select>
 
+    <insert id="requestCertification" parameterType="java.util.Map">
+        /* sign.requestCertification */
+        INSERT INTO AUTH_CODES
+        (PHONE_NUMBER, CODE, EXPIRES_AT)
+        VALUES
+        (#{phoneNumber}, #{code}, DATE_ADD(NOW(), INTERVAL 5 MINUTE))
+    </insert>
+
+    <select id="selectCertification" parameterType="java.util.Map" resultType="authCodesVO">
+        /* sign.selectCertification */
+        SELECT CODES_ID,
+               PHONE_NUMBER,
+               CODE,
+               EXPIRES_AT,
+               IS_VERIFIED,
+               CREATE_AT
+        FROM AUTH_CODES
+        WHERE CODES_ID = (SELECT MAX(CODES_ID)
+                           FROM AUTH_CODES
+                           WHERE PHONE_NUMBER = #{phoneNumber})
+              AND IS_VERIFIED = 0
+    </select>
+
+    <update id="updateCertifiDate" parameterType="java.util.Map">
+        /* sign.selectCertification */
+        UPDATE AUTH_CODES SET
+            CREATE_AT = NOW(),
+            EXPIRES_AT = DATE_ADD(NOW(), INTERVAL 5 MINUTE)
+            WHERE CODES_ID = #{codesId}
+    </update>
+
+    <update id="updateCertifiVerified" parameterType="java.util.Map">
+        /* sign.updateCertifiVerified */
+        UPDATE AUTH_CODES SET
+            IS_VERIFIED = 1
+        WHERE CODES_ID = #{codesId}
+    </update>
+
+    <select id="dupleNickName" parameterType="java.util.Map" resultType="Integer">
+        /* sign.dupleNickName */
+        SELECT COUNT(*)
+        FROM MEMBERS
+        WHERE NICKNAME = #{nickname}
+    </select>
+
+    <insert id="insertMembers" parameterType="java.util.Map">
+        /* sign.insertMembers */
+        INSERT INTO MEMBERS
+        (PHONE_NUMBER, NICKNAME, PASSWORD, MEMBER_GRADE)
+        VALUES
+        (#{phoneNumber}, #{nickname}, #{encodedPassword}, 'NORMAL')
+    </insert>
 </mapper>

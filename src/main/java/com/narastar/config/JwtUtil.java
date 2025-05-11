@@ -4,6 +4,9 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -64,4 +67,36 @@ public class JwtUtil {
         }
     }
 
+    /***
+     * JWT를 쿠키로 설정
+     * @param jwt
+     * @param response
+     */
+    public void sendTokenInCookie(String jwt, HttpServletResponse response) {
+        Cookie cookie = new Cookie("token", jwt);
+        cookie.setHttpOnly(true);             // JavaScript에서 접근 불가
+        cookie.setSecure(true);               // HTTPS 환경에서만 전달
+        cookie.setPath("/");                  // 전체 경로에서 유효
+        cookie.setMaxAge(60 * 60);            // 1시간 (초 단위)
+        cookie.setDomain("localhost");        // 개발 시엔 localhost (배포 시 도메인 설정)
+        cookie.setAttribute("SameSite", "None"); // CORS 대응을 위해 필요
+
+        response.addCookie(cookie);
+    }
+
+    /***
+     * 토큰을 쿠키에 삽입
+     * @param request
+     * @return
+     */
+    public String resolveTokenFromCookie(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+
+        for (Cookie cookie : request.getCookies()) {
+            if ("token".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
+    }
 }

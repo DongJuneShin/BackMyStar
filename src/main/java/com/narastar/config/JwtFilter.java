@@ -2,6 +2,7 @@ package com.narastar.config;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,20 +32,39 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        // JWT 토큰 추출
-        String token = request.getHeader("Authorization");
+        // ✅ [변경] 쿠키에서 토큰 추출
+        String token = extractTokenFromCookie(request);
 
-        // 토큰이 없거나 유효하지 않으면 401 Unauthorized 응답
-        if (token == null || !token.startsWith("Bearer ") || !jwtUtil.validateToken(token.substring(7))) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);  // 401 Unauthorized 응답
+        // ✅ [변경] 토큰이 없거나 유효하지 않으면 401 응답
+        if (token == null || !jwtUtil.validateToken(token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Unauthorized access. Please log in.");
             return;
         }
 
-        // 유효한 토큰이라면, 인증된 사용자로 설정
-        String username = jwtUtil.getUsernameFromToken(token.substring(7));
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>()));
+        // ✅ [변경] 유효한 토큰이면 인증 객체 설정
+        String username = jwtUtil.getUsernameFromToken(token);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>())
+        );
 
+        // 다음 필터로 진행
         filterChain.doFilter(request, response);
+    }
+
+    /***
+     * JWT 인증 필터에서 쿠키 토큰 꺼내기
+     * @param request
+     * @return
+     */
+    public String extractTokenFromCookie(HttpServletRequest request) {
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
     }
 }
