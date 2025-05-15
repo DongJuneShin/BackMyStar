@@ -5,7 +5,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @MapperScan(basePackages = {
-        "com.narastar.sign.mapper"
+        "com.narastar.sign.mapper",
+        "com.narastar.common.mapper"
 })
 public class MyBatisConfig {
 }
