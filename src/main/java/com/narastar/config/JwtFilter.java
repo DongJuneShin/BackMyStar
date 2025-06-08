@@ -1,5 +1,6 @@
 package com.narastar.config;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -32,25 +33,33 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        // ✅ [변경] 쿠키에서 토큰 추출
+        // 쿠키에서 토큰 추출
         String token = extractTokenFromCookie(request);
 
-        // ✅ [변경] 토큰이 없거나 유효하지 않으면 401 응답
+        // 토큰이 없거나 유효하지 않으면 401 응답
         if (token == null || !jwtUtil.validateToken(token)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Unauthorized access. Please log in.");
             return;
         }
 
-        // ✅ [변경] 유효한 토큰이면 인증 객체 설정
-        String username = jwtUtil.getUsernameFromToken(token);
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>())
-        );
+        // 토큰에서 Claims 추출
+        Claims claims = jwtUtil.getClaimsFromToken(token);
+
+        String username = claims.getSubject(); // userId
+        String nickname = claims.get("nickname", String.class); // nickname 커스텀 클레임
+
+        // 인증 객체 생성 시 nickname을 details에 담아서 저장
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>());
+        authenticationToken.setDetails(nickname);
+
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
         // 다음 필터로 진행
         filterChain.doFilter(request, response);
     }
+
 
     /***
      * JWT 인증 필터에서 쿠키 토큰 꺼내기

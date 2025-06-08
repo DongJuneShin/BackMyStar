@@ -173,7 +173,7 @@ public class SignController {
                 resultMap.put("successAt", "100");
                 resultMap.put("message", "존재하지 않는 회원입니다.");
             }else{
-                String token = jwtUtil.generateToken(paramMap.get("phoneInput").toString());
+                String token = jwtUtil.generateToken(paramMap.get("phoneInput").toString(), members.getNickname());
 
                 jwtUtil.sendTokenInCookie(token, response);
 

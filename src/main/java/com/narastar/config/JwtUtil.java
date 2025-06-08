@@ -26,9 +26,10 @@ public class JwtUtil {
      * @param username
      * @return
      */
-    public String generateToken(String username) {
+    public String generateToken(String userId, String userName) {
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(userId)
+                .claim("nickname", userName)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))  // 만료시간 1시간
                 .signWith(Keys.hmacShaKeyFor(secretKey.getBytes()), SignatureAlgorithm.HS256)
@@ -74,7 +75,7 @@ public class JwtUtil {
      */
     public void sendTokenInCookie(String jwt, HttpServletResponse response) {
         Cookie cookie = new Cookie("token", jwt);
-        cookie.setHttpOnly(true);             // JavaScript에서 접근 불가
+        cookie.setHttpOnly(false);             // JavaScript에서 접근 불가
         cookie.setSecure(true);               // HTTPS 환경에서만 전달
         cookie.setPath("/");                  // 전체 경로에서 유효
         cookie.setMaxAge(60 * 60);            // 1시간 (초 단위)
@@ -98,5 +99,13 @@ public class JwtUtil {
             }
         }
         return null;
+    }
+
+    public Claims getClaimsFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey.getBytes())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }

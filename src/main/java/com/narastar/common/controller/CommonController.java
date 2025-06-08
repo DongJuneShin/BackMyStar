@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -56,5 +57,24 @@ public class CommonController {
         }
 
         return ResponseEntity.ok(returnMap);
+    }
+
+    /***
+     * 토큰의 회원 정보 가져오기
+     * @param authentication
+     * @return
+     */
+    @GetMapping("/myUser")
+    public ResponseEntity<?> getCurrentUser(Authentication authentication){
+        if(authentication == null || !authentication.isAuthenticated()){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        String username = authentication.getName();
+        String nickname = (String) authentication.getDetails();
+
+        return ResponseEntity.ok(Map.of(
+                "username", username,
+                "nickname", nickname
+        ));
     }
 }
