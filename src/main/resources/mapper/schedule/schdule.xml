@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.narastar.schdule.mapper.SchduleMapper">
+
+    <insert id="insertSchdule" parameterType="schduleVO">
+        INSERT INTO SCHEDULE
+        (WRITER, TITLE ,CONTENT ,START_DATE ,END_DATE, CREATED_AT)
+        VALUES
+        (#{writer}, #{title}, #{content}, #{startDate}, #{endDate}, SYSDATE())
+    </insert>
+
+    <select id="selectScheduleList" parameterType="java.util.Map" resultType="schduleVO">
+        SELECT  NO,
+                WRITER,
+                TITLE,
+                CONTENT,
+                START_DATE,
+                END_DATE,
+                CREATED_AT
+        FROM SCHEDULE
+        WHERE START_DATE BETWEEN #{startDate} AND #{endDate}
+    </select>
+</mapper>
