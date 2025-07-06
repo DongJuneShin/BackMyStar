@@ -6,6 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SchduleVO {
+    private String no;
     private String title;
     private String content;
     private String startDate;

@@ -11,4 +11,6 @@ public interface SchduleMapper {
     void insertSchdule(SchduleVO schduleVO);
 
     List<SchduleVO> selectScheduleList(Map<String, Object> paramMap);
+
+    void deleteSchedule(Map<String, Object> paramMap);
 }

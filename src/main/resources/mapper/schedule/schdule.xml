@@ -23,4 +23,9 @@
         FROM SCHEDULE
         WHERE START_DATE BETWEEN #{startDate} AND #{endDate}
     </select>
+
+    <delete id="deleteSchedule" parameterType="java.util.Map">
+        DELETE FROM SCHEDULE
+        WHERE NO = #{no}
+    </delete>
 </mapper>

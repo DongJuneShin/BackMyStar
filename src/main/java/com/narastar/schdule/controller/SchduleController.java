@@ -72,4 +72,18 @@ public class SchduleController {
 
         return ResponseEntity.ok(returnMap);
     }
+
+    @PostMapping("/deleteSchedule")
+    public ResponseEntity<?> deleteSchedule(HttpServletRequest request,@RequestBody Map<String, Object> paramMap){
+        Map<String, Object> returnMap = new HashMap<>();
+
+        try{
+            schduleService.deleteSchedule(paramMap);
+            returnMap.put("successAt", "200");
+        }catch(Exception e){
+            returnMap.put("successAt", "100");
+        }
+
+        return ResponseEntity.ok(returnMap);
+    }
 }

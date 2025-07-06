@@ -25,4 +25,9 @@ public class SchduleServiceImpl implements SchduleService {
     public List<SchduleVO> selectScheduleList(Map<String, Object> paramMap) {
         return schduleMapper.selectScheduleList(paramMap);
     }
+
+    @Override
+    public void deleteSchedule(Map<String, Object> paramMap) {
+        schduleMapper.deleteSchedule(paramMap);
+    }
 }
