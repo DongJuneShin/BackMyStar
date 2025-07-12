@@ -8,6 +8,7 @@ import lombok.Setter;
 public class SchduleVO {
     private String no;
     private String title;
+    private String nickname;
     private String content;
     private String startDate;
     private String endDate;

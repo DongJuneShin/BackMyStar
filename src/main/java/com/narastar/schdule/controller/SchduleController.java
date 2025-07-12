@@ -45,24 +45,23 @@ public class SchduleController {
         return ResponseEntity.ok(returnMap);
     }
 
-    @GetMapping("/selectScheduleList")
-    public ResponseEntity<?> selectScheduleList(HttpServletRequest request, @RequestParam String yearMonth){
+    @PostMapping("/selectScheduleList")
+    public ResponseEntity<?> selectScheduleList(
+            HttpServletRequest request,
+            @RequestBody Map<String, String> paraMap) {
+
         Map<String, Object> returnMap = new HashMap<>();
-        YearMonth baseMonth = YearMonth.parse(yearMonth);
 
-        // 시작일: 해당 연월의 1일
-        LocalDate startDate = baseMonth.atDay(1); // 2025-06-01
+        //LocalDate start = LocalDate.parse(startDate);
+        //LocalDate end = LocalDate.parse(endDate);
 
-        // 종료일: 두 달 뒤의 마지막 날
-        LocalDate endDate = baseMonth.plusMonths(2).atEndOfMonth(); // 2025-08-31
-
-        String token = jwtFilter.extractTokenFromCookie(request); // 쿠키에서 JWT 추출
-        Claims claims = jwtUtil.getClaimsFromToken(token); // JWT 파싱
+        String token = jwtFilter.extractTokenFromCookie(request);
+        Claims claims = jwtUtil.getClaimsFromToken(token);
         String phoneNumber = claims.get("sub", String.class);
 
         Map<String, Object> paramMap = new HashMap<>();
-        paramMap.put("startDate", startDate);
-        paramMap.put("endDate", endDate);
+        paramMap.put("startDate", paraMap.get("startDate"));
+        paramMap.put("endDate", paraMap.get("endDate"));
         paramMap.put("phoneNumber", phoneNumber);
 
         List<SchduleVO> schduleList = schduleService.selectScheduleList(paramMap);

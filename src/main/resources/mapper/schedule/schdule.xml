@@ -7,21 +7,36 @@
 
     <insert id="insertSchdule" parameterType="schduleVO">
         INSERT INTO SCHEDULE
-        (WRITER, TITLE ,CONTENT ,START_DATE ,END_DATE, CREATED_AT)
+            (NO, WRITER, TITLE, CONTENT, START_DATE, END_DATE, CREATED_AT)
         VALUES
-        (#{writer}, #{title}, #{content}, #{startDate}, #{endDate}, SYSDATE())
+            (#{no}, #{writer}, #{title}, #{content}, #{startDate}, #{endDate}, SYSDATE())
+            ON DUPLICATE KEY UPDATE
+                                 WRITER = VALUES(WRITER),
+                                 TITLE = VALUES(TITLE),
+                                 CONTENT = VALUES(CONTENT),
+                                 START_DATE = VALUES(START_DATE),
+                                 END_DATE = VALUES(END_DATE),
+                                 CREATED_AT = SYSDATE()
     </insert>
 
     <select id="selectScheduleList" parameterType="java.util.Map" resultType="schduleVO">
-        SELECT  NO,
-                WRITER,
-                TITLE,
-                CONTENT,
-                START_DATE,
-                END_DATE,
-                CREATED_AT
-        FROM SCHEDULE
-        WHERE START_DATE BETWEEN #{startDate} AND #{endDate}
+          <![CDATA[
+                SELECT A.NO,
+                       A.WRITER,
+                       B.NICKNAME,
+                       A.TITLE,
+                       A.CONTENT,
+                       A.START_DATE,
+                       A.END_DATE,
+                       A.CREATED_AT
+                FROM SCHEDULE A, MEMBERS B
+                WHERE A.WRITER = B.PHONE_NUMBER
+                  AND (
+                        A.START_DATE BETWEEN #{startDate} AND #{endDate}
+                        OR A.END_DATE BETWEEN #{startDate} AND #{endDate}
+                        OR (A.START_DATE < #{startDate} AND A.END_DATE > #{endDate})
+                    )
+        ]]>
     </select>
 
     <delete id="deleteSchedule" parameterType="java.util.Map">
